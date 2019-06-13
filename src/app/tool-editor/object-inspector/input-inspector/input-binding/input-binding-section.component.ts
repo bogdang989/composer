@@ -38,7 +38,7 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
             </div>            
 
             <div class="form-group"
-                 *ngIf="propertyType === 'array'">
+                 *ngIf="propertyType === 'array' && version !== 'sbg:draft-2'">
                 <label>Repeat prefix
                 </label>
                 <span class="pull-right">
