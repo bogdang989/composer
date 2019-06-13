@@ -37,12 +37,14 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
                        [formControl]="form.controls['prefix']"/>
             </div>            
 
-            <div class="form-group">
-                <label class="form-control-label">Position</label>
-                <input class="form-control"
-                       type="number"
-                       data-test="position-field"
-                       [formControl]="form.controls['position']"/>
+            <div class="form-group"
+                 *ngIf="propertyType === 'array'">
+                <label>Repeat prefix
+                </label>
+                <span class="pull-right">
+                    <ct-toggle-slider date-test="required-toggle" [formControl]="form.controls['repeatPrefix']">
+                    </ct-toggle-slider>
+                </span>
             </div>
 
             <div class="form-group">
@@ -54,6 +56,14 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
                             [formControl]="form.controls['separate']"
                             [readonly]="readonly"></ct-toggle-slider>
                 </span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-control-label">Position</label>
+                <input class="form-control"
+                       type="number"
+                       data-test="position-field"
+                       [formControl]="form.controls['position']"/>
             </div>
 
             <div class="form-group" *ngIf="propertyType === 'array'">
@@ -142,6 +152,7 @@ export class InputBindingSectionComponent extends DirectiveBase implements Contr
             valueFrom: [{value: input.inputBinding.valueFrom, disabled: this.readonly}, [Validators.required]],
             position: [{value: input.inputBinding.position, disabled: this.readonly}, [Validators.pattern(/^\d+$/)]],
             prefix: [input.inputBinding.prefix],
+            repeatPrefix: [input.type.typeBinding && input.type.typeBinding.prefix !== undefined],
             separate: [input.inputBinding.separate !== false],
             itemSeparator: [!!input.inputBinding.itemSeparator ? input.inputBinding.itemSeparator : null],
             shellQuote: [input.inputBinding.shellQuote]
@@ -161,12 +172,27 @@ export class InputBindingSectionComponent extends DirectiveBase implements Contr
                     this.input.inputBinding.position = parseInt(form.position, 10) || 0;
                 }
 
-                if (form.prefix !== undefined) {
-                    this.input.inputBinding.prefix = form.prefix;
-                }
+                if (form.repeatPrefix === false) {
+                    if (form.prefix !== undefined) {
+                        this.input.inputBinding.prefix = form.prefix;
+                    }
 
-                if (form.separate !== undefined) {
-                    this.input.inputBinding.separate = form.separate;
+                    if (form.separate !== undefined) {
+                        this.input.inputBinding.separate = form.separate;
+                    }
+                    delete this.input.type.typeBinding
+                }
+                else {
+                    this.input.type.typeBinding = (({ prefix }) => ({ prefix }))(this.input.inputBinding);
+                    if (form.prefix !== undefined) {
+                        this.input.type.typeBinding.prefix = form.prefix;
+                        delete this.input.inputBinding.prefix;
+                    }
+
+                    if (form.separate !== undefined) {
+                        this.input.type.typeBinding.separate = form.separate;
+                        delete this.input.inputBinding.separate;
+                    }
                 }
 
                 if (form.itemSeparator !== undefined) {
