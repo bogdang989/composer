@@ -66,7 +66,7 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
                        [formControl]="form.controls['position']"/>
             </div>
 
-            <div class="form-group" *ngIf="propertyType === 'array'">
+            <div class="form-group" *ngIf="propertyType === 'array' && version === 'sbg:draft-2'">
                 <label class="form-control-label">Item Separator</label>
                 <select class="form-control"
                         data-test="item-separator-select"
@@ -78,6 +78,14 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
                         {{itemSeparator.text}}
                     </option>
                 </select>
+            </div>
+     
+            <div class="form-group" *ngIf="propertyType === 'array' && version !== 'sbg:draft-2'">
+                <label class="form-control-label">Item Separator</label>
+                <input class="form-control"
+                       data-test="prefix-field"
+                       [ct-disabled]="isType('record') || readonly"
+                       [formControl]="form.controls['itemSeparator']"/>
             </div>
 
             <div class="form-group" *ngIf="input.inputBinding.hasShellQuote">
