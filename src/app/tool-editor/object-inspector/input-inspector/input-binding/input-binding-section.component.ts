@@ -72,7 +72,7 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
                         data-test="item-separator-select"
                         [ct-disabled]="isType('record')"
                         [formControl]="form.controls['itemSeparator']">
-                    <option *ngFor="let itemSeparator of itemSeparators"
+                    <option *ngFor="let itemSeparator of D2itemSeparators"
                             [disabled]="readonly"
                             [value]="itemSeparator.value">
                         {{itemSeparator.text}}
@@ -82,10 +82,16 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
      
             <div class="form-group" *ngIf="propertyType === 'array' && version !== 'sbg:draft-2'">
                 <label class="form-control-label">Item Separator</label>
-                <input class="form-control"
-                       data-test="prefix-field"
-                       [ct-disabled]="isType('record') || readonly"
-                       [formControl]="form.controls['itemSeparator']"/>
+                <select class="form-control"
+                        data-test="item-separator-select"
+                        [ct-disabled]="isType('record')"
+                        [formControl]="form.controls['itemSeparator']">
+                    <option *ngFor="let itemSeparator of V1itemSeparators"
+                            [disabled]="readonly"
+                            [value]="itemSeparator.value">
+                        {{itemSeparator.text}}
+                    </option>
+                </select>
             </div>
 
             <div class="form-group" *ngIf="input.inputBinding.hasShellQuote">
@@ -124,12 +130,20 @@ export class InputBindingSectionComponent extends DirectiveBase implements Contr
 
     private propagateChange = noop;
 
-    itemSeparators: { text: string, value: string }[] = [
+    D2itemSeparators: { text: string, value: string }[] = [
         {text: "equal", value: "="},
         {text: "comma", value: ","},
         {text: "semicolon", value: ";"},
         {text: "space", value: " "},
         {text: "repeat", value: null}
+    ];
+
+    V1itemSeparators: { text: string, value: string }[] = [
+        {text: "equal", value: "="},
+        {text: "comma", value: ","},
+        {text: "semicolon", value: ";"},
+        {text: "space", value: " "},
+        {text: "<None>", value: undefined}
     ];
 
     constructor(private formBuilder: FormBuilder) {
@@ -205,6 +219,10 @@ export class InputBindingSectionComponent extends DirectiveBase implements Contr
 
                 if (form.itemSeparator !== undefined) {
                     this.input.inputBinding.itemSeparator = form.itemSeparator;
+                }
+
+                if (form.itemSeparator === 'undefined') {
+                    delete this.input.inputBinding.itemSeparator;
                 }
 
                 if (form.valueFrom !== undefined && form.valueFrom.serialize() === undefined || this.isType("record")) {
