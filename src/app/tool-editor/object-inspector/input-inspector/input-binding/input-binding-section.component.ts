@@ -173,7 +173,7 @@ export class InputBindingSectionComponent extends DirectiveBase implements Contr
             stageInput: [input],
             valueFrom: [{value: input.inputBinding.valueFrom, disabled: this.readonly}, [Validators.required]],
             position: [{value: input.inputBinding.position, disabled: this.readonly}, [Validators.pattern(/^\d+$/)]],
-            prefix: [input.inputBinding.prefix],
+            prefix: [input.inputBinding.prefix || input.type.typeBinding.prefix],
             repeatPrefix: [input.type.typeBinding && input.type.typeBinding.prefix !== undefined],
             separate: [input.inputBinding.separate !== false],
             itemSeparator: [!!input.inputBinding.itemSeparator ? input.inputBinding.itemSeparator : null],
