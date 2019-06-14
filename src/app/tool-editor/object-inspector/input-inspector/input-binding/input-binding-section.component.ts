@@ -37,16 +37,6 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
                        [formControl]="form.controls['prefix']"/>
             </div>            
 
-            <div class="form-group"
-                 *ngIf="propertyType === 'array' && version !== 'sbg:draft-2'">
-                <label>Repeat prefix
-                </label>
-                <span class="pull-right">
-                    <ct-toggle-slider date-test="required-toggle" [formControl]="form.controls['repeatPrefix']">
-                    </ct-toggle-slider>
-                </span>
-            </div>
-
             <div class="form-group">
                 <label>Separate value and prefix</label>
                 <span class="pull-right">
@@ -54,6 +44,27 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
                             data-test="separate-value-prefix-toggle"
                             [ct-disabled]="isType('record') || readonly"
                             [formControl]="form.controls['separate']"
+                            [readonly]="readonly"></ct-toggle-slider>
+                </span>
+            </div>
+
+            <div class="form-group"
+                *ngIf="propertyType === 'array' && version !== 'sbg:draft-2'">
+                <label class="form-control-label">Array Item Prefix</label>
+                <input class="form-control"
+                       data-test="prefix-array-item-field"
+                       [ct-disabled]="isType('record') || readonly"
+                       [formControl]="form.controls['prefixArrayItem']"/>
+            </div>     
+
+            <div class="form-group"
+                *ngIf="propertyType === 'array' && version !== 'sbg:draft-2'">
+                <label>Separate value and prefix for array items</label>
+                <span class="pull-right">
+                    <ct-toggle-slider
+                            data-test="separate-value-prefix-toggle"
+                            [ct-disabled]="isType('record') || readonly"
+                            [formControl]="form.controls['separateArrayItem']"
                             [readonly]="readonly"></ct-toggle-slider>
                 </span>
             </div>
@@ -173,9 +184,10 @@ export class InputBindingSectionComponent extends DirectiveBase implements Contr
             stageInput: [input],
             valueFrom: [{value: input.inputBinding.valueFrom, disabled: this.readonly}, [Validators.required]],
             position: [{value: input.inputBinding.position, disabled: this.readonly}, [Validators.pattern(/^\d+$/)]],
-            prefix: [input.inputBinding.prefix || input.type.typeBinding.prefix],
-            repeatPrefix: [input.type.typeBinding && input.type.typeBinding.prefix !== undefined],
+            prefix: [input.inputBinding.prefix],
+            prefixArrayItem: [!!input.type.typeBinding ? input.type.typeBinding.prefix : null],
             separate: [input.inputBinding.separate !== false],
+            separateArrayItem: [!!input.type.typeBinding ? input.type.typeBinding.separate !== false : null],
             itemSeparator: [!!input.inputBinding.itemSeparator ? input.inputBinding.itemSeparator : null],
             shellQuote: [input.inputBinding.shellQuote]
         }, {onlySelf: true});
@@ -194,28 +206,28 @@ export class InputBindingSectionComponent extends DirectiveBase implements Contr
                     this.input.inputBinding.position = parseInt(form.position, 10) || 0;
                 }
 
-                if (form.repeatPrefix === false) {
-                    if (form.prefix !== undefined) {
-                        this.input.inputBinding.prefix = form.prefix;
-                    }
-
-                    if (form.separate !== undefined) {
-                        this.input.inputBinding.separate = form.separate;
-                    }
-                    delete this.input.type.typeBinding
+                if (form.prefix !== undefined) {
+                    this.input.inputBinding.prefix = form.prefix;
                 }
-                else {
-                    this.input.type.typeBinding = (({ prefix }) => ({ prefix }))(this.input.inputBinding);
-                    if (form.prefix !== undefined) {
-                        this.input.type.typeBinding.prefix = form.prefix;
-                        delete this.input.inputBinding.prefix;
-                    }
 
-                    if (form.separate !== undefined) {
-                        this.input.type.typeBinding.separate = form.separate;
-                        delete this.input.inputBinding.separate;
-                    }
+                if (form.separate !== undefined) {
+                    this.input.inputBinding.separate = form.separate;
                 }
+
+                if (form.prefixArrayItem !== undefined) {
+                    if (!this.input.type.typeBinding) {
+                        this.input.type.typeBinding = (({ prefix }) => ({ prefix }))(this.input.inputBinding);
+                    }
+                    this.input.type.typeBinding.prefix = form.prefixArrayItem;
+                }
+
+                if (form.separateArrayItem !== undefined) {
+                    if (!this.input.type.typeBinding) {
+                        this.input.type.typeBinding = (({ prefix }) => ({ prefix }))(this.input.inputBinding);
+                    }
+                     this.input.type.typeBinding.separate = form.separateArrayItem;
+                }
+
 
                 if (form.itemSeparator !== undefined) {
                     this.input.inputBinding.itemSeparator = form.itemSeparator;
