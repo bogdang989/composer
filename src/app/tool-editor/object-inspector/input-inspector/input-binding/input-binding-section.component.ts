@@ -38,14 +38,6 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
             </div>            
 
             <div class="form-group">
-                <label class="form-control-label">Position</label>
-                <input class="form-control"
-                       type="number"
-                       data-test="position-field"
-                       [formControl]="form.controls['position']"/>
-            </div>
-
-            <div class="form-group">
                 <label>Separate value and prefix</label>
                 <span class="pull-right">
                     <ct-toggle-slider
@@ -56,13 +48,56 @@ import {distinctUntilChanged, debounceTime} from "rxjs/operators";
                 </span>
             </div>
 
-            <div class="form-group" *ngIf="propertyType === 'array'">
+            <div class="form-group"
+                *ngIf="propertyType === 'array' && version !== 'sbg:draft-2'">
+                <label class="form-control-label">Array Item Prefix</label>
+                <input class="form-control"
+                       data-test="prefix-array-item-field"
+                       [ct-disabled]="isType('record') || readonly"
+                       [formControl]="form.controls['prefixArrayItem']"/>
+            </div>     
+
+            <div class="form-group"
+                *ngIf="propertyType === 'array' && version !== 'sbg:draft-2'">
+                <label>Separate value and prefix for array items</label>
+                <span class="pull-right">
+                    <ct-toggle-slider
+                            data-test="separate-value-prefix-toggle"
+                            [ct-disabled]="isType('record') || readonly"
+                            [formControl]="form.controls['separateArrayItem']"
+                            [readonly]="readonly"></ct-toggle-slider>
+                </span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-control-label">Position</label>
+                <input class="form-control"
+                       type="number"
+                       data-test="position-field"
+                       [formControl]="form.controls['position']"/>
+            </div>
+
+            <div class="form-group" *ngIf="propertyType === 'array' && version === 'sbg:draft-2'">
                 <label class="form-control-label">Item Separator</label>
                 <select class="form-control"
                         data-test="item-separator-select"
                         [ct-disabled]="isType('record')"
                         [formControl]="form.controls['itemSeparator']">
-                    <option *ngFor="let itemSeparator of itemSeparators"
+                    <option *ngFor="let itemSeparator of D2itemSeparators"
+                            [disabled]="readonly"
+                            [value]="itemSeparator.value">
+                        {{itemSeparator.text}}
+                    </option>
+                </select>
+            </div>
+     
+            <div class="form-group" *ngIf="propertyType === 'array' && version !== 'sbg:draft-2'">
+                <label class="form-control-label">Item Separator</label>
+                <select class="form-control"
+                        data-test="item-separator-select"
+                        [ct-disabled]="isType('record')"
+                        [formControl]="form.controls['itemSeparator']">
+                    <option *ngFor="let itemSeparator of V1itemSeparators"
                             [disabled]="readonly"
                             [value]="itemSeparator.value">
                         {{itemSeparator.text}}
@@ -106,12 +141,20 @@ export class InputBindingSectionComponent extends DirectiveBase implements Contr
 
     private propagateChange = noop;
 
-    itemSeparators: { text: string, value: string }[] = [
+    D2itemSeparators: { text: string, value: string }[] = [
         {text: "equal", value: "="},
         {text: "comma", value: ","},
         {text: "semicolon", value: ";"},
         {text: "space", value: " "},
         {text: "repeat", value: null}
+    ];
+
+    V1itemSeparators: { text: string, value: string }[] = [
+        {text: "equal", value: "="},
+        {text: "comma", value: ","},
+        {text: "semicolon", value: ";"},
+        {text: "space", value: " "},
+        {text: "<None>", value: undefined}
     ];
 
     constructor(private formBuilder: FormBuilder) {
@@ -142,7 +185,9 @@ export class InputBindingSectionComponent extends DirectiveBase implements Contr
             valueFrom: [{value: input.inputBinding.valueFrom, disabled: this.readonly}, [Validators.required]],
             position: [{value: input.inputBinding.position, disabled: this.readonly}, [Validators.pattern(/^\d+$/)]],
             prefix: [input.inputBinding.prefix],
+            prefixArrayItem: [!!input.type.typeBinding ? input.type.typeBinding.prefix : null],
             separate: [input.inputBinding.separate !== false],
+            separateArrayItem: [!!input.type.typeBinding ? input.type.typeBinding.separate !== false : null],
             itemSeparator: [!!input.inputBinding.itemSeparator ? input.inputBinding.itemSeparator : null],
             shellQuote: [input.inputBinding.shellQuote]
         }, {onlySelf: true});
@@ -169,8 +214,27 @@ export class InputBindingSectionComponent extends DirectiveBase implements Contr
                     this.input.inputBinding.separate = form.separate;
                 }
 
+                if (form.prefixArrayItem !== undefined) {
+                    if (!this.input.type.typeBinding) {
+                        this.input.type.typeBinding = (({ prefix }) => ({ prefix }))(this.input.inputBinding);
+                    }
+                    this.input.type.typeBinding.prefix = form.prefixArrayItem;
+                }
+
+                if (form.separateArrayItem !== undefined) {
+                    if (!this.input.type.typeBinding) {
+                        this.input.type.typeBinding = (({ prefix }) => ({ prefix }))(this.input.inputBinding);
+                    }
+                     this.input.type.typeBinding.separate = form.separateArrayItem;
+                }
+
+
                 if (form.itemSeparator !== undefined) {
                     this.input.inputBinding.itemSeparator = form.itemSeparator;
+                }
+
+                if (form.itemSeparator === 'undefined') {
+                    delete this.input.inputBinding.itemSeparator;
                 }
 
                 if (form.valueFrom !== undefined && form.valueFrom.serialize() === undefined || this.isType("record")) {
